@@ -5,7 +5,7 @@
 공식 출발점: https://www.nba.com/mavs/roster
 보조 공식 로스터: https://pdfroster.nba.com/dallas-mavericks/ (페이지에는 2025 시즌 데이터라고 표시되어 있어 현재 소속 판단의 단독 근거로 사용하지 않았습니다.)
 
-개별 NBA 프로필에서 Dallas Mavericks 소속을 교차 확인한 Cooper Flagg, Max Christie, Dereck Lively II, Dwight Powell, Kyrie Irving만 사용합니다. 보조 로스터에 있던 Klay Thompson은 개별 프로필에서 Miami Heat 소속으로 표시되어 제외했습니다. 전체 2026–27 로스터를 모두 수록한 앱이 아닙니다.
+개별 NBA 프로필에서 Dallas Mavericks 소속을 교차 확인한 Cooper Flagg, Kyrie Irving, Dereck Lively II, P.J. Washington, Naji Marshall, Daniel Gafford, Morez Johnson Jr., Santi Aldama, Max Christie의 9명 사진을 사용합니다. 기존 Dwight Powell 자산은 보존하지만 게임 배정 목록에서 제외했습니다. 보조 로스터에 있던 Klay Thompson은 개별 프로필에서 Miami Heat 소속으로 표시되어 제외했습니다. 전체 2026–27 로스터를 모두 수록한 앱이 아닙니다.
 
 각 이름·실제 player ID·확인한 프로필 URL·확인한 이미지 URL·로컬 경로·확인일·크기·바이트 수는 `src/players.json`에 기록했습니다. URL은 공식 페이지의 이미지 링크에서 확인했습니다. PNG 원본 바이트를 그대로 저장했으며 수정·워터마크 제거를 하지 않았습니다. 화면에서는 CSS로 잘라 표시합니다. HTTP 200 및 image/png, PNG 크기, 실제 브라우저 디코딩과 시각 검증을 수행합니다.
 

@@ -1,11 +1,19 @@
 import type {GameState} from './game';
 import {placeFaces, type Bounds} from './layout';
-import {playerFor,portrait} from './players';
+import {playerFor,players,portrait, type Player} from './players';
+import {PhotoAssignments} from './assignment';
 export class Renderer {
+ private assignments=new PhotoAssignments(players.length);
+ private photoError=false;
+ private player(slot:number):Player {
+  if(!this.photoError)try{return playerFor(this.assignments.get(slot));}catch{this.photoError=true;}
+  // A verified portrait can still render; the game itself stops if Crypto fails.
+  return playerFor(slot);
+ }
  private nodes=new Map<number,HTMLElement>(); private frame:number|null=null;
  private state:GameState|null=null; private lastWinner:number|null=null;
  constructor(private root:HTMLElement,private center:HTMLElement,private faces:HTMLElement,private result:HTMLElement,private onRetry:()=>void){}
- update(state:GameState){this.state=state;if(this.frame===null)this.frame=requestAnimationFrame(()=>{this.frame=null;this.draw();});}
+ update(state:GameState){if(state.phase==='idle'&&state.touches.size===0&&!state.winner){this.assignments.reset();this.photoError=false;for(const node of this.nodes.values())node.remove();this.nodes.clear();}this.state=state;if(this.frame===null)this.frame=requestAnimationFrame(()=>{this.frame=null;this.draw();});}
  cancel(){if(this.frame!==null)cancelAnimationFrame(this.frame);this.frame=null;}
  private draw(){
   const state=this.state;if(!state)return;
@@ -21,7 +29,7 @@ export class Renderer {
    if(!node){node=document.createElement('div');node.className='touch';node.dataset.pointerId=String(touch.id);
     const ring=document.createElement('div');ring.className='ring';
     const line=document.createElement('div');line.className='connector';
-    const face=document.createElement('div');face.className='face';face.append(portrait(playerFor(touch.slot)));
+    const face=document.createElement('div');face.className='face';face.append(portrait(this.player(touch.slot)));
     const number=document.createElement('span');number.className='participant';number.textContent=String(touch.slot+1);face.append(number);
     node.append(ring,line,face);this.faces.append(node);this.nodes.set(touch.id,node);
    }
@@ -38,7 +46,7 @@ export class Renderer {
   this.center.setAttribute('aria-label',state.phase==='countdown'?`추첨까지 ${state.count}초`:state.phase==='stabilizing'?'참가 터치 확인 중':state.phase==='idle'?'터치 대기':message);
   if(state.winner){
    this.result.style.display='flex';
-   if(this.lastWinner!==state.winner.id){this.result.replaceChildren();const player=playerFor(state.winner.slot);
+   if(this.lastWinner!==state.winner.id){this.result.replaceChildren();const player=this.player(state.winner.slot);
     const card=document.createElement('div');card.className='result-card';
     const caption=document.createElement('span');caption.className='result-label';caption.textContent='SELECTED';
     const name=document.createElement('h1');name.id='winner-name';name.textContent=player.name;

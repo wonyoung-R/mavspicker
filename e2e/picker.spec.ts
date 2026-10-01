@@ -62,7 +62,7 @@ for(const [width,height,n] of [[360,640,2],[390,844,3],[844,390,5]])test(`${widt
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});
  await page.setViewportSize({width,height});await open(page);
  const decoded=await page.evaluate(async()=>{const {players}=await import('/src/players.ts');return Promise.all(players.map(async(p:{localAssetPath:string})=>{const i=new Image();i.src=p.localAssetPath;await i.decode();return i.naturalWidth>100&&i.naturalHeight>100;}));});
- expect(decoded).toHaveLength(5);expect(decoded.every(Boolean)).toBe(true);
+ expect(decoded).toHaveLength(9);expect(decoded.every(Boolean)).toBe(true);
  const points=[[2,2],[width-2,height-2],[width/2,height/2],[width/2+2,height/2],[width/2+4,height/2]];
  for(let i=0;i<n;i++)await pointer(page,'pointerdown',i+1,...points[i] as [number,number]);
  await page.clock.runFor(200);
@@ -135,4 +135,30 @@ test('retry tap and keyboard activation never become game participants',async({p
  await pointer(page,'pointerup',11);await pointer(page,'pointerup',12);await page.clock.runFor(6000);await expect(page.locator('#result')).toHaveAttribute('aria-label',result!);
  const button=page.getByRole('button',{name:'다시하기',exact:true});await expect(button).toBeFocused();await page.keyboard.press('Enter');await page.clock.runFor(40);
  await expect(page.locator('#app')).toHaveAttribute('data-phase','idle');await expect(page.locator('.touch')).toHaveCount(0);await expect(page.locator('#result')).toBeHidden();
+});
+
+test('nine touches receive unique requested photos; existing mapping and winner portrait stay consistent',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await open(page);
+ const expected=await page.evaluate(async()=>{const {players}=await import('/src/players.ts');return players.map((p:{playerId:number;localAssetPath:string})=>({id:p.playerId,path:p.localAssetPath}));});
+ expect(expected).toHaveLength(9);
+ expect(expected.map(p=>p.id).sort((a,b)=>a-b)).toEqual([1642843,202681,1641726,1629023,1630230,1629655,1643516,1630583,1631108].sort((a,b)=>a-b));
+ for(let id=1;id<=9;id++)await pointer(page,'pointerdown',id,70+((id-1)%3)*120,180+Math.floor((id-1)/3)*230);
+ await expect(page.locator('.touch')).toHaveCount(9);
+ const mapping=await page.locator('.touch').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.getAttribute('data-pointer-id'),n.querySelector('img')?.getAttribute('src')])));
+ const paths=Object.values(mapping);expect(new Set(paths).size).toBe(9);expect([...paths].sort()).toEqual(expected.map(p=>p.path).sort());
+ await pointer(page,'pointermove',1,140,190);await pointer(page,'pointerup',9);await pointer(page,'pointerdown',10,310,640);
+ for(let id=1;id<=8;id++)await expect(page.locator(`.touch[data-pointer-id="${id}"] img`)).toHaveAttribute('src',mapping[String(id)]!);
+ await page.screenshot({path:testInfo.outputPath('nine-participants.png')});await winner(page);
+ const chosen=await page.locator('.chosen img').getAttribute('src');await expect(page.locator('#result img')).toHaveAttribute('src',chosen!);expect(errors).toEqual([]);
+});
+
+test('retry creates fresh randomized photo permutation with deterministic crypto inputs',async({page})=>{
+ await page.addInitScript(()=>{
+  let calls=0;
+  Object.defineProperty(Crypto.prototype,'getRandomValues',{value:<T extends ArrayBufferView>(array:T):T=>{const values=array as unknown as Uint32Array;for(let i=0;i<values.length;i++)values[i]=calls++<9?0:1;return array;}});
+ });
+ await open(page);await participants(page);
+ const first=await page.locator('.touch[data-pointer-id="1"] img').getAttribute('src');await winner(page);await retry(page);await participants(page);
+ const second=await page.locator('.touch[data-pointer-id="1"] img').getAttribute('src');expect(second).not.toBe(first);
+ await winner(page);await expect(page.locator('#result img')).toHaveAttribute('src',(await page.locator('.chosen img').getAttribute('src'))!);
 });

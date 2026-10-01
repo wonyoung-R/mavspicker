@@ -11,15 +11,15 @@
     "bytes": 178624
   },
   {
-    "name": "Max Christie",
-    "playerId": 1631108,
-    "localAssetPath": "/players/1631108.png",
-    "sourceProfileUrl": "https://www.nba.com/player/1631108/max-christie",
-    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/1631108.png?im=Resize%2Cwidth%3D220",
+    "name": "Kyrie Irving",
+    "playerId": 202681,
+    "localAssetPath": "/players/202681.png",
+    "sourceProfileUrl": "https://www.nba.com/player/202681/kyrie-irving",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/202681.png?im=Resize%2Cwidth%3D220",
     "verifiedAt": "2026-10-02",
     "width": 220,
     "height": 161,
-    "bytes": 33013
+    "bytes": 35991
   },
   {
     "name": "Dereck Lively II",
@@ -33,25 +33,69 @@
     "bytes": 43302
   },
   {
-    "name": "Dwight Powell",
-    "playerId": 203939,
-    "localAssetPath": "/players/203939.png",
-    "sourceProfileUrl": "https://www.nba.com/player/203939/dwight-powell",
-    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/203939.png?im=Resize%2Cwidth%3D220",
+    "name": "P.J. Washington",
+    "playerId": 1629023,
+    "localAssetPath": "/players/1629023.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1629023/pj-washington",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1629023.png",
     "verifiedAt": "2026-10-02",
-    "width": 220,
-    "height": 161,
-    "bytes": 33334
+    "width": 1040,
+    "height": 760,
+    "bytes": 174994
   },
   {
-    "name": "Kyrie Irving",
-    "playerId": 202681,
-    "localAssetPath": "/players/202681.png",
-    "sourceProfileUrl": "https://www.nba.com/player/202681/kyrie-irving",
-    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/202681.png?im=Resize%2Cwidth%3D220",
+    "name": "Naji Marshall",
+    "playerId": 1630230,
+    "localAssetPath": "/players/1630230.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1630230/naji-marshall",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1630230.png",
+    "verifiedAt": "2026-10-02",
+    "width": 1040,
+    "height": 760,
+    "bytes": 188598
+  },
+  {
+    "name": "Daniel Gafford",
+    "playerId": 1629655,
+    "localAssetPath": "/players/1629655.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1629655/daniel-gafford",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1629655.png",
+    "verifiedAt": "2026-10-02",
+    "width": 1040,
+    "height": 760,
+    "bytes": 198215
+  },
+  {
+    "name": "Morez Johnson Jr.",
+    "playerId": 1643516,
+    "localAssetPath": "/players/1643516.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1643516/morez-johnson",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1643516.png",
+    "verifiedAt": "2026-10-02",
+    "width": 1040,
+    "height": 760,
+    "bytes": 178928
+  },
+  {
+    "name": "Santi Aldama",
+    "playerId": 1630583,
+    "localAssetPath": "/players/1630583.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1630583/santi-aldama",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1630583.png",
+    "verifiedAt": "2026-10-02",
+    "width": 1040,
+    "height": 760,
+    "bytes": 172837
+  },
+  {
+    "name": "Max Christie",
+    "playerId": 1631108,
+    "localAssetPath": "/players/1631108.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1631108/max-christie",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/1631108.png?im=Resize%2Cwidth%3D220",
     "verifiedAt": "2026-10-02",
     "width": 220,
     "height": 161,
-    "bytes": 35991
+    "bytes": 33013
   }
 ]
