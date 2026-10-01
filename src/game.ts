@@ -1,7 +1,7 @@
 import { uniformIndex } from './random';
 
 export const STABILIZE_MS = 400;
-export const COUNTDOWN_MS = 3000;
+export const COUNTDOWN_MS = 5000;
 export type Phase = 'idle' | 'stabilizing' | 'countdown' | 'result' | 'error';
 export interface Touch { id: number; x: number; y: number; slot: number }
 export interface GameState {
@@ -24,7 +24,6 @@ export class Game {
   readonly state: GameState = { phase: 'idle', touches: new Map(), winner: null, count: null };
   private round = 0;
   private timers = new Set<unknown>();
-  private resumeWithNewInput = false;
   private readonly options: GameOptions;
   private readonly schedule: (callback: () => void, ms: number) => unknown;
   private readonly cancel: (handle: unknown) => void;
@@ -37,10 +36,6 @@ export class Game {
 
   add(id: number, x: number, y: number): void {
     if (!this.active() || this.state.touches.has(id)) return;
-    if (this.resumeWithNewInput) {
-      this.reset();
-      this.resumeWithNewInput = false;
-    }
     const locked = this.state.phase === 'result' || this.state.phase === 'error';
     const occupied = new Set([...this.state.touches.values()].map(t => t.slot));
     let slot = 0;
@@ -60,10 +55,12 @@ export class Game {
 
   remove(id: number): void {
     if (!this.state.touches.delete(id)) return;
-    if (this.state.touches.size === 0) {
+    if (this.state.phase === 'result') {
+      this.emit();
+    } else if (this.state.touches.size === 0) {
       this.reset();
       this.emit();
-    } else if (this.state.phase === 'result' || this.state.phase === 'error') this.emit();
+    } else if (this.state.phase === 'error') this.emit();
     else this.restart();
   }
 
@@ -71,8 +68,13 @@ export class Game {
   interrupt(): void {
     this.invalidate();
     this.state.touches.clear();
-    if (this.state.phase === 'result') this.resumeWithNewInput = true;
-    else this.reset();
+    if (this.state.phase !== 'result') this.reset();
+    this.emit();
+  }
+
+  /** Only explicit retry clears a completed result; old input cannot rejoin. */
+  retry(): void {
+    this.reset();
     this.emit();
   }
 
@@ -91,7 +93,6 @@ export class Game {
     this.state.phase = 'idle';
     this.state.count = null;
     this.state.winner = null;
-    this.resumeWithNewInput = false;
   }
 
   private matches(round: number, snapshot: number[]): boolean {
@@ -123,9 +124,14 @@ export class Game {
     const snapshot = [...this.state.touches.keys()];
     this.later(STABILIZE_MS, round, snapshot, () => {
       this.state.phase = 'countdown';
-      this.state.count = 3;
-      this.later(1000, round, snapshot, () => { this.state.count = 2; this.emit(); });
-      this.later(2000, round, snapshot, () => { this.state.count = 1; this.emit(); });
+      const seconds = COUNTDOWN_MS / 1000;
+      this.state.count = seconds;
+      for (let elapsed = 1; elapsed < seconds; elapsed++) {
+        this.later(elapsed * 1000, round, snapshot, () => {
+          this.state.count = seconds - elapsed;
+          this.emit();
+        });
+      }
       this.later(COUNTDOWN_MS, round, snapshot, () => this.finish(round, snapshot));
       this.emit();
     });

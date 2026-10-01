@@ -5,7 +5,8 @@ import {Renderer} from './render';
 import {preloadPlayers} from './players';
 const root=document.querySelector<HTMLElement>('#app')!;
 const center=document.querySelector<HTMLElement>('#center')!;
-const renderer=new Renderer(root,center,document.querySelector('#faces')!,document.querySelector('#result')!);
+let retry=()=>{};
+const renderer=new Renderer(root,center,document.querySelector('#faces')!,document.querySelector('#result')!,()=>retry());
 const vibrate=(ms:number)=>{try{navigator.vibrate?.(ms);}catch{/* Optional hardware capability. */}};
 let fullscreenAttempted=false;
 function fullscreen(){
@@ -13,11 +14,12 @@ function fullscreen(){
  fullscreenAttempted=true;
  try{void root.requestFullscreen().catch(()=>{});}catch{/* Continue in browser. */}
 }
-const game=new Game({active:()=>document.visibilityState==='visible',onChange:s=>renderer.update(s),onWin:()=>vibrate(40)});
+const game=new Game({active:()=>document.visibilityState==='visible',onChange:s=>renderer.update(s),onWin:()=>vibrate(80)});
 const supported='PointerEvent' in window&&navigator.maxTouchPoints>=2;
 if(supported){
- const interrupt=bindInput(root,game,fullscreen);
- const suspend=()=>{renderer.cancel();interrupt();vibrate(0);};
+ const input=bindInput(root,game,fullscreen);
+ retry=input.retry;
+ const suspend=()=>{renderer.cancel();input.interrupt();vibrate(0);};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
  window.addEventListener('pagehide',suspend);
  window.addEventListener('blur',suspend);

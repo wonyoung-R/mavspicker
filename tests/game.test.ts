@@ -22,7 +22,7 @@ describe('touch round state machine', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it.each([2, 3, 5])('stabilizes %i touches then shows 3,2,1 and exactly one winner', n => {
+  it.each([2, 3, 5])('stabilizes %i touches then shows 5,4,3,2,1 and exactly one winner', n => {
     const choose = vi.fn(() => n - 1);
     const onWin = vi.fn();
     const game = new Game({ choose, onWin });
@@ -32,11 +32,11 @@ describe('touch round state machine', () => {
     expect(game.state.count).toBeNull();
     vi.advanceTimersByTime(1);
     expect(game.state.phase).toBe('countdown');
-    expect(game.state.count).toBe(3);
-    vi.advanceTimersByTime(1000);
-    expect(game.state.count).toBe(2);
-    vi.advanceTimersByTime(1000);
-    expect(game.state.count).toBe(1);
+    expect(game.state.count).toBe(5);
+    for (const count of [4, 3, 2, 1]) {
+      vi.advanceTimersByTime(1000);
+      expect(game.state.count).toBe(count);
+    }
     vi.advanceTimersByTime(999);
     expect(game.state.winner).toBeNull();
     vi.advanceTimersByTime(1);
@@ -60,8 +60,8 @@ describe('touch round state machine', () => {
     vi.advanceTimersByTime(399);
     expect(game.state.count).toBeNull();
     vi.advanceTimersByTime(1);
-    expect(game.state.count).toBe(3);
-    vi.advanceTimersByTime(3000);
+    expect(game.state.count).toBe(5);
+    vi.advanceTimersByTime(COUNTDOWN_MS);
     expect(game.state.phase).toBe('result');
     expect(game.state.touches.size).toBe(action === 'add' ? 4 : 2);
   });
@@ -74,7 +74,7 @@ describe('touch round state machine', () => {
     vi.advanceTimersByTime(399);
     expect(game.state.phase).toBe('stabilizing');
     vi.advanceTimersByTime(1);
-    expect(game.state.count).toBe(3);
+    expect(game.state.count).toBe(5);
   });
 
   it('movement and repeated down never reset countdown or change slot', () => {
@@ -83,8 +83,8 @@ describe('touch round state machine', () => {
     vi.advanceTimersByTime(1400);
     game.move(1, -50, 900);
     game.add(1, 1, 1);
-    expect(game.state.count).toBe(2);
-    vi.advanceTimersByTime(2000);
+    expect(game.state.count).toBe(4);
+    vi.advanceTimersByTime(COUNTDOWN_MS - 1000);
     expect(game.state.winner).toEqual({ id: 1, x: -50, y: 900, slot: 0 });
   });
 
@@ -92,14 +92,14 @@ describe('touch round state machine', () => {
     const choose = vi.fn(() => 0);
     const game = new Game({ choose });
     participants(game);
-    vi.advanceTimersByTime(3399);
+    vi.advanceTimersByTime(STABILIZE_MS + COUNTDOWN_MS - 1);
     game.remove(1);
     vi.advanceTimersByTime(10000);
     expect(game.state.phase).toBe('idle');
     expect(choose).not.toHaveBeenCalled();
   });
 
-  it('winner stays fixed after winner removal and new down until everyone releases', () => {
+  it('winner stays fixed after winner removal and new down until explicit retry even after everyone releases', () => {
     const onWin = vi.fn();
     const game = new Game({ choose: () => 0, onWin });
     participants(game);
@@ -115,6 +115,10 @@ describe('touch round state machine', () => {
     expect(game.state.phase).toBe('result');
     expect(onWin).toHaveBeenCalledTimes(1);
     game.remove(3);
+    expect(game.state.phase).toBe('result');
+    expect(game.state.winner).toBe(winner);
+    expect(game.state.touches.size).toBe(0);
+    game.retry();
     expect(game.state.phase).toBe('idle');
     expect(game.state.winner).toBeNull();
     participants(game);
@@ -135,7 +139,7 @@ describe('touch round state machine', () => {
     expect(game.state.touches.size).toBe(0);
   });
 
-  it.each([200, 1400, 3399])('interruption at %ims discards pointers and timers; resume needs new down', ms => {
+  it.each([200, 1400, STABILIZE_MS + COUNTDOWN_MS - 1])('interruption at %ims discards pointers and timers; resume needs new down', ms => {
     const onWin = vi.fn();
     const game = new Game({ choose: () => 0, onWin });
     participants(game);
@@ -169,7 +173,7 @@ describe('touch round state machine', () => {
     expect(game.state.touches.size).toBe(0);
   });
 
-  it('interrupt preserves a completed result, then fresh down starts a new round', () => {
+  it('interrupt and fresh down preserve completed result until retry', () => {
     const game = new Game({ choose: () => 0 });
     participants(game);
     result();
@@ -180,9 +184,16 @@ describe('touch round state machine', () => {
     expect(game.state.touches.size).toBe(0);
     game.move(1, 0, 0);
     game.add(4, 40, 40);
+    game.add(5, 50, 50);
+    result();
+    expect(game.state.phase).toBe('result');
+    expect(game.state.winner).toBe(winner);
+    expect(game.state.touches.get(4)?.slot).toBe(-1);
+    game.retry();
     expect(game.state.phase).toBe('idle');
     expect(game.state.winner).toBeNull();
-    expect(game.state.touches.get(4)?.slot).toBe(0);
+    expect(game.state.touches.size).toBe(0);
+    game.add(4, 40, 40);
     game.add(5, 50, 50);
     result();
     expect(game.state.winner?.id).toBe(4);
@@ -227,6 +238,49 @@ describe('touch round state machine', () => {
     currentDraw(); currentDraw();
     expect(game.state.phase).toBe('result');
     expect(choose).toHaveBeenCalledExactlyOnceWith(2);
+  });
+
+  it('retry emits idle, cancels countdown, and ignores moves and releases from old fingers', () => {
+    const onChange = vi.fn();
+    const onWin = vi.fn();
+    const game = new Game({ choose: () => 0, onChange, onWin });
+    participants(game);
+    vi.advanceTimersByTime(STABILIZE_MS + 1000);
+    game.retry();
+    expect(onChange.mock.lastCall?.[0].phase).toBe('idle');
+    expect(game.state.count).toBeNull();
+    expect(game.state.touches.size).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+    game.move(1, 50, 50);
+    game.remove(2);
+    result();
+    expect(game.state.touches.size).toBe(0);
+    expect(onWin).not.toHaveBeenCalled();
+    game.add(3, 30, 30);
+    expect(game.state.touches.get(3)?.slot).toBe(0);
+    expect(game.state.phase).toBe('idle');
+    game.add(4, 40, 40);
+    result();
+    expect(onWin).toHaveBeenCalledTimes(1);
+  });
+
+  it('retry invalidates stale callbacks even if pointer IDs are reused', () => {
+    const queue: (() => void)[] = [];
+    const choose = vi.fn(() => 0);
+    const game = new Game({ choose, setTimeout: fn => { queue.push(fn); return queue.length; }, clearTimeout: () => {} });
+    participants(game);
+    queue[0]!();
+    const staleCallbacks = queue.slice();
+    game.retry();
+    participants(game);
+    staleCallbacks.forEach(fn => fn());
+    expect(game.state.phase).toBe('stabilizing');
+    expect(game.state.count).toBeNull();
+    expect(choose).not.toHaveBeenCalled();
+    queue.at(-1)!();
+    queue.at(-1)!();
+    expect(game.state.phase).toBe('result');
+    expect(choose).toHaveBeenCalledTimes(1);
   });
 
   it('rechecks round identity after random source and does not draw interrupted round', () => {

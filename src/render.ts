@@ -1,10 +1,10 @@
 import type {GameState} from './game';
-import {placeFaces,resultSpace, type Bounds} from './layout';
+import {placeFaces, type Bounds} from './layout';
 import {playerFor,portrait} from './players';
 export class Renderer {
  private nodes=new Map<number,HTMLElement>(); private frame:number|null=null;
  private state:GameState|null=null; private lastWinner:number|null=null;
- constructor(private root:HTMLElement,private center:HTMLElement,private faces:HTMLElement,private result:HTMLElement){}
+ constructor(private root:HTMLElement,private center:HTMLElement,private faces:HTMLElement,private result:HTMLElement,private onRetry:()=>void){}
  update(state:GameState){this.state=state;if(this.frame===null)this.frame=requestAnimationFrame(()=>{this.frame=null;this.draw();});}
  cancel(){if(this.frame!==null)cancelAnimationFrame(this.frame);this.frame=null;}
  private draw(){
@@ -37,14 +37,17 @@ export class Renderer {
   if(this.center.textContent!==message)this.center.textContent=message;
   this.center.setAttribute('aria-label',state.phase==='countdown'?`추첨까지 ${state.count}초`:state.phase==='stabilizing'?'참가 터치 확인 중':state.phase==='idle'?'터치 대기':message);
   if(state.winner){
+   this.result.style.display='flex';
    if(this.lastWinner!==state.winner.id){this.result.replaceChildren();const player=playerFor(state.winner.slot);
+    const card=document.createElement('div');card.className='result-card';
     const caption=document.createElement('span');caption.className='result-label';caption.textContent='SELECTED';
-    const name=document.createElement('h1');name.textContent=player.name;
-    this.result.append(caption,portrait(player),name);this.result.setAttribute('aria-label',`당첨: ${player.name}, 참가 ${state.winner.slot+1}`);this.lastWinner=state.winner.id;
+    const name=document.createElement('h1');name.id='winner-name';name.textContent=player.name;
+    const retry=document.createElement('button');retry.type='button';retry.className='retry';retry.textContent='다시하기';
+    retry.addEventListener('click',event=>{event.stopPropagation();this.onRetry();});
+    card.append(caption,portrait(player),name,retry);this.result.append(card);
+    this.result.setAttribute('aria-label',`당첨: ${player.name}, 참가 ${state.winner.slot+1}`);this.lastWinner=state.winner.id;
+    retry.focus({preventScroll:true});
    }
-   const small=this.root.clientHeight<480;const w=Math.min(240,bounds.right-bounds.left),h=small?180:270;
-   const point=resultSpace([...placements,...touches],bounds,w,h);
-   this.result.style.cssText=`display:flex;width:${w}px;height:${h}px;left:${point.x-w/2}px;top:${point.y-h/2}px`;
   }else{this.result.replaceChildren();this.result.style.display='none';this.result.removeAttribute('aria-label');this.lastWinner=null;}
  }
 }
