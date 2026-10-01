@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Cooper Flagg",
+    "playerId": 1642843,
+    "localAssetPath": "/players/1642843.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1642843/cooper-flagg",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/1040x760/1642843.png",
+    "verifiedAt": "2026-10-02",
+    "width": 1040,
+    "height": 760,
+    "bytes": 178624
+  },
+  {
+    "name": "Max Christie",
+    "playerId": 1631108,
+    "localAssetPath": "/players/1631108.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1631108/max-christie",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/1631108.png?im=Resize%2Cwidth%3D220",
+    "verifiedAt": "2026-10-02",
+    "width": 220,
+    "height": 161,
+    "bytes": 33013
+  },
+  {
+    "name": "Dereck Lively II",
+    "playerId": 1641726,
+    "localAssetPath": "/players/1641726.png",
+    "sourceProfileUrl": "https://www.nba.com/player/1641726/dereck-lively-ii",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/1641726.png?im=Resize%2Cwidth%3D220",
+    "verifiedAt": "2026-10-02",
+    "width": 220,
+    "height": 161,
+    "bytes": 43302
+  },
+  {
+    "name": "Dwight Powell",
+    "playerId": 203939,
+    "localAssetPath": "/players/203939.png",
+    "sourceProfileUrl": "https://www.nba.com/player/203939/dwight-powell",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/203939.png?im=Resize%2Cwidth%3D220",
+    "verifiedAt": "2026-10-02",
+    "width": 220,
+    "height": 161,
+    "bytes": 33334
+  },
+  {
+    "name": "Kyrie Irving",
+    "playerId": 202681,
+    "localAssetPath": "/players/202681.png",
+    "sourceProfileUrl": "https://www.nba.com/player/202681/kyrie-irving",
+    "sourceImageUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/202681.png?im=Resize%2Cwidth%3D220",
+    "verifiedAt": "2026-10-02",
+    "width": 220,
+    "height": 161,
+    "bytes": 35991
+  }
+]
