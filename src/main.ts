@@ -14,7 +14,7 @@ function fullscreen(){
  fullscreenAttempted=true;
  try{void root.requestFullscreen().catch(()=>{});}catch{/* Continue in browser. */}
 }
-const game=new Game({active:()=>document.visibilityState==='visible',onChange:s=>renderer.update(s),onWin:()=>vibrate(80)});
+const game=new Game({active:()=>document.visibilityState==='visible',onChange:s=>renderer.update(s),onWin:()=>vibrate(120)});
 const supported='PointerEvent' in window&&navigator.maxTouchPoints>=2;
 if(supported){
  const input=bindInput(root,game,fullscreen);

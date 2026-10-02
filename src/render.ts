@@ -2,7 +2,7 @@ import type {GameState} from './game';
 import {placeFaces, type Bounds} from './layout';
 import {playerFor,players,portrait, type Player} from './players';
 import {PhotoAssignments} from './assignment';
-const participantColors=['#66b8ff','#63e2b4','#ffd166','#ff8e84','#bd9aff','#f18dcc','#66e3ef','#bcdf6b','#d1dbe6'];
+const participantColors=['#009aff','#00e68a','#ffca00','#ff7a00','#b366ff','#ff25a8','#00dcec','#90e000','#ff264b'];
 const colorFor=(slot:number)=>participantColors[slot%participantColors.length];
 export class Renderer {
  private assignments=new PhotoAssignments(players.length);
@@ -51,11 +51,9 @@ export class Renderer {
    this.result.style.setProperty('--participant-color',colorFor(state.winner.slot));
    if(this.lastWinner!==state.winner.id){this.result.replaceChildren();const player=this.player(state.winner.slot);
     const card=document.createElement('div');card.className='result-card';
-    const caption=document.createElement('span');caption.className='result-label';caption.textContent='SELECTED';
-    const name=document.createElement('h1');name.id='winner-name';name.textContent=player.name;
     const retry=document.createElement('button');retry.type='button';retry.className='retry';retry.textContent='다시하기';
     retry.addEventListener('click',event=>{event.stopPropagation();this.onRetry();});
-    card.append(caption,portrait(player),name,retry);this.result.append(card);
+    const image=portrait(player);image.classList.add('winner-impact');card.append(image,retry);this.result.append(card);
     this.result.setAttribute('aria-label',`당첨: ${player.name}, 참가 ${state.winner.slot+1}`);this.lastWinner=state.winner.id;
     retry.focus({preventScroll:true});
    }

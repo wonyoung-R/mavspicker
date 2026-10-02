@@ -67,8 +67,8 @@ for(const [width,height,n] of [[360,640,2],[390,844,3],[844,390,5]])test(`${widt
  for(let i=0;i<n;i++)await pointer(page,'pointerdown',i+1,...points[i] as [number,number]);
  await page.clock.runFor(200);
  for(const face of await page.locator('.face').all()){const b=await face.boundingBox();expect(b!.x).toBeGreaterThanOrEqual(0);expect(b!.y).toBeGreaterThanOrEqual(0);expect(b!.x+b!.width).toBeLessThanOrEqual(width);expect(b!.y+b!.height).toBeLessThanOrEqual(height);}
- await page.screenshot({path:testInfo.outputPath('participants.png')});await winner(page);await expect(page.locator('#result h1')).not.toHaveText('');await expect(page.getByRole('dialog')).toHaveAttribute('aria-modal','true');await expect(page.getByRole('button',{name:'다시하기',exact:true})).toBeVisible();
- for(const child of ['#result .portrait','#result h1','#result button']){const c=await page.locator(child).boundingBox();expect(c!.x).toBeGreaterThanOrEqual(0);expect(c!.y).toBeGreaterThanOrEqual(0);expect(c!.x+c!.width).toBeLessThanOrEqual(width);expect(c!.y+c!.height).toBeLessThanOrEqual(height);}
+ await page.screenshot({path:testInfo.outputPath('participants.png')});await winner(page);await expect(page.locator('#result')).toHaveAttribute('aria-label',/^당첨: .+, 참가 \d+$/);await expect(page.locator('#result img')).toHaveAttribute('alt',/.+/);await expect(page.locator('#result h1, #result .result-label')).toHaveCount(0);expect(await page.locator('.result-card').evaluate(n=>getComputedStyle(n).backgroundColor)).toBe('rgba(0, 0, 0, 0)');await expect(page.getByRole('dialog')).toHaveAttribute('aria-modal','true');await expect(page.getByRole('button',{name:'다시하기',exact:true})).toBeVisible();
+ for(const child of ['#result .portrait','#result button']){const c=await page.locator(child).boundingBox();expect(c!.x).toBeGreaterThanOrEqual(0);expect(c!.y).toBeGreaterThanOrEqual(0);expect(c!.x+c!.width).toBeLessThanOrEqual(width);expect(c!.y+c!.height).toBeLessThanOrEqual(height);}
  const b=await page.locator('#result').boundingBox();expect(b!.x).toBeGreaterThanOrEqual(0);expect(b!.y).toBeGreaterThanOrEqual(0);expect(b!.x+b!.width).toBeLessThanOrEqual(width);expect(b!.y+b!.height).toBeLessThanOrEqual(height);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:testInfo.outputPath('result.png')});expect(errors).toEqual([]);
@@ -90,8 +90,11 @@ test('fullscreen rejects once; vibrate false leaves visual winner intact',async(
  });
  await open(page);await page.locator('#app').tap({position:{x:100,y:200}});await page.locator('#app').tap({position:{x:100,y:200}});
  expect(await page.evaluate(()=>(window as unknown as {testCalls:{fullscreen:number}}).testCalls.fullscreen)).toBe(1);
- await participants(page);await winner(page);await page.clock.runFor(5000);
- expect(await page.evaluate(()=>(window as unknown as {testCalls:{vibration:number[]}}).testCalls.vibration.filter(ms=>ms===80))).toEqual([80]);expect(errors).toEqual([]);
+ await participants(page);await page.clock.runFor(5379);await expect(page.locator('#center')).toHaveText('1');
+ expect(await page.evaluate(()=>(window as unknown as {testCalls:{vibration:number[]}}).testCalls.vibration.filter(ms=>ms>0))).toEqual([]);
+ await page.clock.runFor(1);expect(await page.evaluate(()=>(window as unknown as {testCalls:{vibration:number[]}}).testCalls.vibration.filter(ms=>ms>0))).toEqual([120]);
+ await page.clock.runFor(20);await expect(page.locator('#app')).toHaveAttribute('data-phase','result');await page.clock.runFor(5000);
+ expect(await page.evaluate(()=>(window as unknown as {testCalls:{vibration:number[]}}).testCalls.vibration.filter(ms=>ms===120))).toEqual([120]);expect(errors).toEqual([]);
 });
 
 test('no multi-touch capability gives brief unsupported status',async({page})=>{
@@ -175,4 +178,13 @@ test('retry creates fresh randomized photo permutation with deterministic crypto
  const first=await page.locator('.touch[data-pointer-id="1"] img').getAttribute('src');await winner(page);await retry(page);await participants(page);
  const second=await page.locator('.touch[data-pointer-id="1"] img').getAttribute('src');expect(second).not.toBe(first);
  await winner(page);await expect(page.locator('#result img')).toHaveAttribute('src',(await page.locator('.chosen img').getAttribute('src'))!);
+});
+
+for(const motion of ['no-preference','reduce'] as const)test(`winner impact motion: ${motion}`,async({page})=>{
+ await page.emulateMedia({reducedMotion:motion});await open(page);await participants(page);await winner(page);
+ const portrait=page.locator('#result .portrait');await expect(portrait).toHaveClass(/winner-impact/);
+ const style=await portrait.evaluate(n=>{const s=getComputedStyle(n);return {name:s.animationName,duration:s.animationDuration,iterations:s.animationIterationCount,radius:s.borderTopLeftRadius,width:s.borderTopWidth};});
+ expect(style.radius).toBe('50%');expect(style.width).toBe('12px');
+ if(motion==='reduce')expect(style.name).toBe('none');
+ else{expect(style.name).toBe('winner-impact');expect(style.duration).toBe('0.28s');expect(style.iterations).toBe('1');}
 });
