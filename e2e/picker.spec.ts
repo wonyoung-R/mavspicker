@@ -146,10 +146,24 @@ test('nine touches receive unique requested photos; existing mapping and winner 
  await expect(page.locator('.touch')).toHaveCount(9);
  const mapping=await page.locator('.touch').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.getAttribute('data-pointer-id'),n.querySelector('img')?.getAttribute('src')])));
  const paths=Object.values(mapping);expect(new Set(paths).size).toBe(9);expect([...paths].sort()).toEqual(expected.map(p=>p.path).sort());
+ const colors=await page.locator('.touch').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.getAttribute('data-pointer-id'),getComputedStyle(n.querySelector('.face')!).borderTopColor])));
+ expect(new Set(Object.values(colors)).size).toBe(9);
+ for(const node of await page.locator('.touch').all()){
+  const values=await node.evaluate(n=>({face:getComputedStyle(n.querySelector('.face')!).borderTopColor,ring:getComputedStyle(n.querySelector('.ring')!).borderTopColor,line:getComputedStyle(n.querySelector('.connector')!).backgroundColor,badge:getComputedStyle(n.querySelector('.participant')!).backgroundColor}));
+  expect(values.ring).toBe(values.face);expect(values.line).toBe(values.face);expect(values.badge).toBe(values.face);
+ }
  await pointer(page,'pointermove',1,140,190);await pointer(page,'pointerup',9);await pointer(page,'pointerdown',10,310,640);
- for(let id=1;id<=8;id++)await expect(page.locator(`.touch[data-pointer-id="${id}"] img`)).toHaveAttribute('src',mapping[String(id)]!);
+ for(let id=1;id<=8;id++){
+  await expect(page.locator(`.touch[data-pointer-id="${id}"] img`)).toHaveAttribute('src',mapping[String(id)]!);
+  expect(await page.locator(`.touch[data-pointer-id="${id}"] .face`).evaluate(n=>getComputedStyle(n).borderTopColor)).toBe(colors[String(id)]);
+ }
  await page.screenshot({path:testInfo.outputPath('nine-participants.png')});await winner(page);
- const chosen=await page.locator('.chosen img').getAttribute('src');await expect(page.locator('#result img')).toHaveAttribute('src',chosen!);expect(errors).toEqual([]);
+ const chosen=await page.locator('.chosen img').getAttribute('src');await expect(page.locator('#result img')).toHaveAttribute('src',chosen!);
+ const chosenId=await page.locator('.chosen').getAttribute('data-pointer-id');
+ const winnerColor=await page.locator('.chosen .face').evaluate(n=>getComputedStyle(n).borderTopColor);
+ if(chosenId!=='10')expect(winnerColor).toBe(colors[chosenId!]);
+ expect(await page.locator('.chosen .ring').evaluate(n=>getComputedStyle(n).borderTopColor)).toBe(winnerColor);
+ expect(await page.locator('#result .portrait').evaluate(n=>getComputedStyle(n).borderTopColor)).toBe(winnerColor);expect(errors).toEqual([]);
 });
 
 test('retry creates fresh randomized photo permutation with deterministic crypto inputs',async({page})=>{

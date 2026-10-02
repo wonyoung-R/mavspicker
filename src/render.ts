@@ -2,6 +2,8 @@ import type {GameState} from './game';
 import {placeFaces, type Bounds} from './layout';
 import {playerFor,players,portrait, type Player} from './players';
 import {PhotoAssignments} from './assignment';
+const participantColors=['#66b8ff','#63e2b4','#ffd166','#ff8e84','#bd9aff','#f18dcc','#66e3ef','#bcdf6b','#d1dbe6'];
+const colorFor=(slot:number)=>participantColors[slot%participantColors.length];
 export class Renderer {
  private assignments=new PhotoAssignments(players.length);
  private photoError=false;
@@ -26,7 +28,7 @@ export class Renderer {
   for(const [id,node] of this.nodes)if(!present.has(id)){node.remove();this.nodes.delete(id);}
   touches.forEach((touch,i)=>{
    let node=this.nodes.get(touch.id);
-   if(!node){node=document.createElement('div');node.className='touch';node.dataset.pointerId=String(touch.id);
+   if(!node){node=document.createElement('div');node.className='touch';node.dataset.pointerId=String(touch.id);node.style.setProperty('--participant-color',colorFor(touch.slot));
     const ring=document.createElement('div');ring.className='ring';
     const line=document.createElement('div');line.className='connector';
     const face=document.createElement('div');face.className='face';face.append(portrait(this.player(touch.slot)));
@@ -46,6 +48,7 @@ export class Renderer {
   this.center.setAttribute('aria-label',state.phase==='countdown'?`추첨까지 ${state.count}초`:state.phase==='stabilizing'?'참가 터치 확인 중':state.phase==='idle'?'터치 대기':message);
   if(state.winner){
    this.result.style.display='flex';
+   this.result.style.setProperty('--participant-color',colorFor(state.winner.slot));
    if(this.lastWinner!==state.winner.id){this.result.replaceChildren();const player=this.player(state.winner.slot);
     const card=document.createElement('div');card.className='result-card';
     const caption=document.createElement('span');caption.className='result-label';caption.textContent='SELECTED';
